@@ -1,23 +1,24 @@
 local ClickGui = {}
+local TweenService = game:GetService("TweenService")
 
--- Функция создания окна с перетаскиванием
+-- Функция создания окна
 function ClickGui:CreateWindow(title)
     -- Создаём ScreenGui
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     
-    -- Создаём основную рамку (окно)
+    -- Создаём большой чёрный фрейм
     local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0, 300, 0, 200)
-    Frame.Position = UDim2.new(0.5, -150, 0.5, -100) -- Центр экрана
-    Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Frame.Size = UDim2.new(0, 500, 0, 400) -- Большой размер
+    Frame.Position = UDim2.new(0.5, -250, 0.5, -200) -- Центр экрана
+    Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Чёрный цвет
     Frame.BorderSizePixel = 0
     Frame.Parent = ScreenGui
     
-    -- Создаём заголовок (полоса для перетаскивания)
+    -- Заголовок
     local TitleBar = Instance.new("Frame")
     TitleBar.Size = UDim2.new(1, 0, 0, 30)
-    TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     TitleBar.BorderSizePixel = 0
     TitleBar.Parent = Frame
     
@@ -30,11 +31,8 @@ function ClickGui:CreateWindow(title)
     TitleLabel.Font = Enum.Font.SourceSans
     TitleLabel.Parent = TitleBar
     
-    -- Переменные для перетаскивания
-    local dragging = false
-    local dragInput, dragStart, startPos
-    
-    -- Логика перетаскивания
+    -- Перетаскивание
+    local dragging, dragInput, dragStart, startPos
     TitleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -42,40 +40,98 @@ function ClickGui:CreateWindow(title)
             startPos = Frame.Position
         end
     end)
-    
     TitleBar.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
             local delta = input.Position - dragStart
-            Frame.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
+            Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
-    
     TitleBar.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
     
-    -- Возвращаем объект с методами
+    -- Контейнер для контента вкладок
+    local ContentFrame = Instance.new("Frame")
+    ContentFrame.Size = UDim2.new(1, 0, 1, -60) -- Учитываем заголовок и табы
+    ContentFrame.Position = UDim2.new(0, 0, 0, 30)
+    ContentFrame.BackgroundTransparency = 1
+    ContentFrame.Parent = Frame
+    
+    -- Контейнер для вкладок
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Size = UDim2.new(1, 0, 0, 30)
+    TabContainer.Position = UDim2.new(0, 0, 1, -30) -- Внизу
+    TabContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    TabContainer.BorderSizePixel = 0
+    TabContainer.Parent = Frame
+    
+    local Tabs = {}
+    local ActiveTab = nil
+    
+    -- Функция создания вкладки
+    local function CreateTab(tabName)
+        local TabButton = Instance.new("TextButton")
+        TabButton.Size = UDim2.new(0, 100, 1, 0)
+        TabButton.Position = UDim2.new(0, #Tabs * 100, 0, 0)
+        TabButton.Text = tabName or "Tab"
+        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TabButton.TextSize = 14
+        TabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        TabButton.BorderSizePixel = 0
+        TabButton.Parent = TabContainer
+        
+        local TabContent = Instance.new("Frame")
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.BackgroundTransparency = 1
+        TabContent.Parent = ContentFrame
+        TabContent.Visible = false
+        
+        local tabObj = {
+            Button = TabButton,
+            Content = TabContent,
+            AddButton = function(self, buttonText, callback)
+                local Button = Instance.new("TextButton")
+                Button.Size = UDim2.new(0, 100, 0, 30)
+                Button.Position = UDim2.new(0, 10, 0, #TabContent:GetChildren() * 40)
+                Button.Text = buttonText or "Click Me"
+                Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+                Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                Button.BorderSizePixel = 0
+                Button.Parent = TabContent
+                Button.MouseButton1Click:Connect(callback or function() print("Button clicked!") end)
+                return Button
+            end
+        }
+        
+        -- Анимация и переключение вкладок
+        TabButton.MouseButton1Click:Connect(function()
+            if ActiveTab ~= tabObj then
+                if ActiveTab then
+                    ActiveTab.Content.Visible = false
+                    TweenService:Create(ActiveTab.Button, TweenInfo.new(0.3), {TextSize = 14}):Play()
+                end
+                tabObj.Content.Visible = true
+                TweenService:Create(TabButton, TweenInfo.new(0.3), {TextSize = 18}):Play()
+                ActiveTab = tabObj
+            end
+        end)
+        
+        table.insert(Tabs, tabObj)
+        return tabObj
+    end
+    
+    -- Активируем первую вкладку по умолчанию
+    if #Tabs > 0 then
+        Tabs[1].Content.Visible = true
+        TweenService:Create(Tabs[1].Button, TweenInfo.new(0.3), {TextSize = 18}):Play()
+        ActiveTab = Tabs[1]
+    end
+    
     return {
         Window = Frame,
-        AddButton = function(self, buttonText, callback)
-            local Button = Instance.new("TextButton")
-            Button.Size = UDim2.new(0, 100, 0, 30)
-            Button.Position = UDim2.new(0, 10, 0, 40 + (#Frame:GetChildren() - 1) * 40) -- Учитываем TitleBar
-            Button.Text = buttonText or "Click Me"
-            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-            Button.BorderSizePixel = 0
-            Button.Parent = Frame
-            Button.MouseButton1Click:Connect(callback or function() print("Button clicked!") end)
-            return Button
-        end
+        AddTab = CreateTab
     }
 end
 

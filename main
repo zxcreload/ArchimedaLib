@@ -4,26 +4,30 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.Name = "CustomClickGUI"
 
--- Создаем основной фрейм с увеличенными размерами
+-- Создаем основной фрейм (увеличиваем ширину на 200)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 600, 0, 500)
-mainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
+mainFrame.Size = UDim2.new(0, 800, 0, 500) -- Было 600, стало 800
+mainFrame.Position = UDim2.new(-1, -800, 0.5, -250) -- Смещаем начальную позицию
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
-mainFrame.Visible = true
+mainFrame.Visible = false
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 10)
-corner.Parent = mainFrame
+-- Градиентная линия сверху основного фрейма
+local topLine = Instance.new("Frame")
+topLine.Size = UDim2.new(1, 0, 0, 3)
+topLine.Position = UDim2.new(0, 0, 0, 0)
+topLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+topLine.BorderSizePixel = 0
+topLine.Parent = mainFrame
 
-local gradient = Instance.new("UIGradient")
-gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+local lineGradient = Instance.new("UIGradient")
+lineGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 162, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 209))
 }
-gradient.Rotation = 45
-gradient.Parent = mainFrame
+lineGradient.Rotation = 0
+lineGradient.Parent = topLine
 
 local stroke = Instance.new("UIStroke")
 stroke.Thickness = 2
@@ -31,7 +35,7 @@ stroke.Color = Color3.fromRGB(0, 0, 0)
 stroke.Transparency = 0.7
 stroke.Parent = mainFrame
 
--- Drag-and-drop с UserInputService
+-- Drag-and-drop
 local dragging = false
 local dragStart = nil
 local startPos = nil
@@ -59,15 +63,7 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Открытие/закрытие на Insert
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Insert then
-        mainFrame.Visible = not mainFrame.Visible
-    end
-end)
-
--- Панель для основных вкладок (слева)
+-- Панель для основных вкладок
 local sectionPanel = Instance.new("Frame")
 sectionPanel.Size = UDim2.new(0, 150, 1, 0)
 sectionPanel.Position = UDim2.new(0, 0, 0, 0)
@@ -75,21 +71,13 @@ sectionPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 sectionPanel.BorderSizePixel = 0
 sectionPanel.Parent = mainFrame
 
-local sectionCorner = Instance.new("UICorner")
-sectionCorner.CornerRadius = UDim.new(0, 10)
-sectionCorner.Parent = sectionPanel
-
--- Область контента (справа)
+-- Область контента (увеличиваем ширину)
 local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(0, 450, 1, 0)
+contentArea.Size = UDim2.new(0, 650, 1, 0) -- Было 450, стало 650
 contentArea.Position = UDim2.new(0, 150, 0, 0)
 contentArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 contentArea.BorderSizePixel = 0
 contentArea.Parent = mainFrame
-
-local contentCorner = Instance.new("UICorner")
-contentCorner.CornerRadius = UDim.new(0, 10)
-contentCorner.Parent = contentArea
 
 -- Панель для подвкладок с прокруткой
 local subSectionPanel = Instance.new("ScrollingFrame")
@@ -102,11 +90,7 @@ subSectionPanel.CanvasSize = UDim2.new(0, 0, 0, 0)
 subSectionPanel.Parent = contentArea
 subSectionPanel.Visible = false
 
-local subSectionCorner = Instance.new("UICorner")
-subSectionCorner.CornerRadius = UDim.new(0, 8)
-subSectionCorner.Parent = subSectionPanel
-
--- Область настроек (под подвкладками)
+-- Область настроек
 local settingsArea = Instance.new("Frame")
 settingsArea.Size = UDim2.new(1, 0, 1, -60)
 settingsArea.Position = UDim2.new(0, 0, 0, 60)
@@ -114,11 +98,7 @@ settingsArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 settingsArea.BorderSizePixel = 0
 settingsArea.Parent = contentArea
 
-local settingsCorner = Instance.new("UICorner")
-settingsCorner.CornerRadius = UDim.new(0, 8)
-settingsCorner.Parent = settingsArea
-
--- Данные о секциях и подвкладках с фиксированным порядком
+-- Данные о секциях и подвкладках
 local sections = {
     {name = "AimBot", subSections = {"Silent", "Camlock", "Bullet", "Rage", "Legit", "Trigger"}},
     {name = "AntiAim", subSections = {"Desync", "Spin", "Jitter", "FakePitch", "Invert"}},
@@ -131,7 +111,7 @@ local sections = {
 local sectionButtons = {}
 local subSectionButtons = {}
 
--- Функция создания кнопок подвкладок с прокруткой
+-- Функция создания кнопок подвкладок
 local function createSubSections(sectionName)
     for _, btn in pairs(subSectionButtons) do
         btn:Destroy()
@@ -147,16 +127,15 @@ local function createSubSections(sectionName)
         end
     end
 
-    local buttonWidth = 90
-    local buttonHeight = 40
+    local buttonSize = 50 -- Квадратные кнопки 50x50
     local padding = 5
-    local totalWidth = (#subSections * (buttonWidth + padding)) - padding
+    local totalWidth = (#subSections * (buttonSize + padding)) - padding
     subSectionPanel.CanvasSize = UDim2.new(0, totalWidth, 0, 0)
 
     for i, subSectionName in ipairs(subSections) do
         local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
-        button.Position = UDim2.new(0, (i - 1) * (buttonWidth + padding), 0, 10)
+        button.Size = UDim2.new(0, buttonSize, 0, buttonSize) -- Квадратные
+        button.Position = UDim2.new(0, (i - 1) * (buttonSize + padding), 0, 5)
         button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
         button.BorderSizePixel = 0
         button.Text = subSectionName
@@ -165,9 +144,21 @@ local function createSubSections(sectionName)
         button.Font = Enum.Font.Gotham
         button.Parent = subSectionPanel
 
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 6)
-        btnCorner.Parent = button
+        -- Градиентная линия сверху кнопки
+        local btnTopLine = Instance.new("Frame")
+        btnTopLine.Size = UDim2.new(1, 0, 0, 2)
+        btnTopLine.Position = UDim2.new(0, 0, 0, 0)
+        btnTopLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        btnTopLine.BorderSizePixel = 0
+        btnTopLine.Parent = button
+
+        local btnLineGradient = Instance.new("UIGradient")
+        btnLineGradient.Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 162, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 209))
+        }
+        btnLineGradient.Rotation = 0
+        btnLineGradient.Parent = btnTopLine
 
         button.MouseEnter:Connect(function()
             game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
@@ -186,6 +177,8 @@ local function createSubSections(sectionName)
             game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
 
             for _, child in pairs(settingsArea:GetChildren()) do
+                game.TweenService:Create(child, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {TextTransparency = 1}):Play()
+                task.wait(0.2)
                 child:Destroy()
             end
             local settingsLabel = Instance.new("TextLabel")
@@ -195,7 +188,9 @@ local function createSubSections(sectionName)
             settingsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             settingsLabel.TextSize = 18
             settingsLabel.Font = Enum.Font.Gotham
+            settingsLabel.TextTransparency = 1
             settingsLabel.Parent = settingsArea
+            game.TweenService:Create(settingsLabel, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
         end)
 
         table.insert(subSectionButtons, button)
@@ -209,8 +204,8 @@ end
 -- Создаем основные вкладки
 for i, section in ipairs(sections) do
     local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, -10, 0, 50)
-    button.Position = UDim2.new(0, 5, 0, (i - 1) * 55 + 5)
+    button.Size = UDim2.new(1, -10, 0, 40)
+    button.Position = UDim2.new(0, 5, 0, (i - 1) * 45 + 5)
     button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     button.BorderSizePixel = 0
     button.Text = section.name
@@ -219,16 +214,21 @@ for i, section in ipairs(sections) do
     button.Font = Enum.Font.GothamBold
     button.Parent = sectionPanel
 
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 8)
-    btnCorner.Parent = button
+    -- Градиентная линия сверху кнопки
+    local btnTopLine = Instance.new("Frame")
+    btnTopLine.Size = UDim2.new(1, 0, 0, 2)
+    btnTopLine.Position = UDim2.new(0, 0, 0, 0)
+    btnTopLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    btnTopLine.BorderSizePixel = 0
+    btnTopLine.Parent = button
 
-    local btnGradient = Instance.new("UIGradient")
-    btnGradient.Color = ColorSequence.new{
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 80)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+    local btnLineGradient = Instance.new("UIGradient")
+    btnLineGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 162, 255)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 255, 209))
     }
-    btnGradient.Parent = button
+    btnLineGradient.Rotation = 0
+    btnLineGradient.Parent = btnTopLine
 
     button.MouseEnter:Connect(function()
         game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
@@ -252,5 +252,48 @@ for i, section in ipairs(sections) do
     table.insert(sectionButtons, button)
 end
 
--- Активируем первую вкладку ("AimBot")
-sectionButtons[1]:MouseButton1Click()
+-- Анимация открытия/закрытия на Insert
+local isOpen = false
+local function toggleGUI()
+    local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+    
+    if isOpen then
+        -- Анимация закрытия
+        if subSectionPanel.Visible then
+            subSectionPanel.Visible = false
+        end
+        if sectionButtons.active then
+            game.TweenService:Create(sectionButtons.active, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+            sectionButtons.active = nil
+        end
+        for _, child in pairs(settingsArea:GetChildren()) do
+            child:Destroy()
+        end
+        
+        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(-1, -800, 0.5, -250)}) -- Учитываем новую ширину
+        mainTween:Play()
+        mainTween.Completed:Connect(function()
+            mainFrame.Visible = false
+        end)
+    else
+        -- Анимация открытия
+        mainFrame.Visible = true
+        mainFrame.Position = UDim2.new(-1, -800, 0.5, -250) -- Учитываем новую ширину
+        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.5, -400, 0.5, -250)}) -- Центрируем с учетом ширины 800
+        mainTween:Play()
+        mainTween.Completed:Connect(function()
+            sectionButtons[1]:MouseButton1Click()
+        end)
+    end
+    isOpen = not isOpen
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        toggleGUI()
+    end
+end)
+
+-- Открываем GUI при запуске
+toggleGUI()

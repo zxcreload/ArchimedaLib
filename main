@@ -4,10 +4,10 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = player:WaitForChild("PlayerGui")
 screenGui.Name = "CustomClickGUI"
 
--- Создаем основной фрейм
+-- Создаем основной фрейм с увеличенными размерами
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 450, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -225, 0.5, -200)
+mainFrame.Size = UDim2.new(0, 600, 0, 500)
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -250)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
@@ -81,7 +81,7 @@ sectionCorner.Parent = sectionPanel
 
 -- Область контента (справа)
 local contentArea = Instance.new("Frame")
-contentArea.Size = UDim2.new(0, 300, 1, 0)
+contentArea.Size = UDim2.new(0, 450, 1, 0)
 contentArea.Position = UDim2.new(0, 150, 0, 0)
 contentArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 contentArea.BorderSizePixel = 0
@@ -91,12 +91,14 @@ local contentCorner = Instance.new("UICorner")
 contentCorner.CornerRadius = UDim.new(0, 10)
 contentCorner.Parent = contentArea
 
--- Панель для подвкладок
-local subSectionPanel = Instance.new("Frame")
-subSectionPanel.Size = UDim2.new(1, 0, 0, 50) -- Высота 50 для ряда кнопок
+-- Панель для подвкладок с прокруткой
+local subSectionPanel = Instance.new("ScrollingFrame")
+subSectionPanel.Size = UDim2.new(1, 0, 0, 60)
 subSectionPanel.Position = UDim2.new(0, 0, 0, 0)
 subSectionPanel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 subSectionPanel.BorderSizePixel = 0
+subSectionPanel.ScrollBarThickness = 4
+subSectionPanel.CanvasSize = UDim2.new(0, 0, 0, 0)
 subSectionPanel.Parent = contentArea
 subSectionPanel.Visible = false
 
@@ -106,8 +108,8 @@ subSectionCorner.Parent = subSectionPanel
 
 -- Область настроек (под подвкладками)
 local settingsArea = Instance.new("Frame")
-settingsArea.Size = UDim2.new(1, 0, 1, -50) -- Оставляем место для подвкладок
-settingsArea.Position = UDim2.new(0, 0, 0, 50)
+settingsArea.Size = UDim2.new(1, 0, 1, -60)
+settingsArea.Position = UDim2.new(0, 0, 0, 60)
 settingsArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 settingsArea.BorderSizePixel = 0
 settingsArea.Parent = contentArea
@@ -116,20 +118,20 @@ local settingsCorner = Instance.new("UICorner")
 settingsCorner.CornerRadius = UDim.new(0, 8)
 settingsCorner.Parent = settingsArea
 
--- Данные о секциях и подвкладках
+-- Данные о секциях и подвкладках с фиксированным порядком
 local sections = {
-    ["AimBot"] = {"Silent", "Camlock", "Bullet"},
-    ["AntiAim"] = {"Desync", "Spin", "Jitter"},
-    ["Movement"] = {"Speed", "BunnyHop", "Flight"},
-    ["PlayerSettings"] = {"ESP", "Chams", "Health"},
-    ["Misc"] = {"KillSay", "AutoClick", "FakeLag"},
-    ["UiSettings"] = {"Theme", "Keybinds", "Reset"}
+    {name = "AimBot", subSections = {"Silent", "Camlock", "Bullet", "Rage", "Legit", "Trigger"}},
+    {name = "AntiAim", subSections = {"Desync", "Spin", "Jitter", "FakePitch", "Invert"}},
+    {name = "Movement", subSections = {"Speed", "BunnyHop", "Flight", "NoClip", "Teleport"}},
+    {name = "PlayerSettings", subSections = {"ESP", "Chams", "Health", "FOV", "Tracers"}},
+    {name = "Misc", subSections = {"KillSay", "AutoClick", "FakeLag", "ChatSpam", "Exploits"}},
+    {name = "UiSettings", subSections = {"Theme", "Keybinds", "Reset", "Scale", "Colors"}}
 }
 
 local sectionButtons = {}
 local subSectionButtons = {}
 
--- Функция создания кнопок подвкладок
+-- Функция создания кнопок подвкладок с прокруткой
 local function createSubSections(sectionName)
     for _, btn in pairs(subSectionButtons) do
         btn:Destroy()
@@ -137,11 +139,24 @@ local function createSubSections(sectionName)
     subSectionButtons = {}
     subSectionPanel.Visible = true
 
-    local subSections = sections[sectionName]
+    local subSections
+    for _, section in ipairs(sections) do
+        if section.name == sectionName then
+            subSections = section.subSections
+            break
+        end
+    end
+
+    local buttonWidth = 90
+    local buttonHeight = 40
+    local padding = 5
+    local totalWidth = (#subSections * (buttonWidth + padding)) - padding
+    subSectionPanel.CanvasSize = UDim2.new(0, totalWidth, 0, 0)
+
     for i, subSectionName in ipairs(subSections) do
         local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0, 90, 0, 40)
-        button.Position = UDim2.new(0, (i - 1) * 95 + 5, 0, 5)
+        button.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
+        button.Position = UDim2.new(0, (i - 1) * (buttonWidth + padding), 0, 10)
         button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
         button.BorderSizePixel = 0
         button.Text = subSectionName
@@ -186,20 +201,19 @@ local function createSubSections(sectionName)
         table.insert(subSectionButtons, button)
     end
 
-    -- Активируем первую подвкладку
     if #subSectionButtons > 0 then
         subSectionButtons[1]:MouseButton1Click()
     end
 end
 
 -- Создаем основные вкладки
-for sectionName, _ in pairs(sections) do
+for i, section in ipairs(sections) do
     local button = Instance.new("TextButton")
     button.Size = UDim2.new(1, -10, 0, 50)
-    button.Position = UDim2.new(0, 5, 0, (#sectionButtons * 55) + 5)
+    button.Position = UDim2.new(0, 5, 0, (i - 1) * 55 + 5)
     button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
     button.BorderSizePixel = 0
-    button.Text = sectionName
+    button.Text = section.name
     button.TextColor3 = Color3.fromRGB(255, 255, 255)
     button.TextSize = 18
     button.Font = Enum.Font.GothamBold
@@ -232,11 +246,11 @@ for sectionName, _ in pairs(sections) do
         sectionButtons.active = button
         game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
 
-        createSubSections(sectionName)
+        createSubSections(section.name)
     end)
 
     table.insert(sectionButtons, button)
 end
 
--- Активируем первую вкладку
+-- Активируем первую вкладку ("AimBot")
 sectionButtons[1]:MouseButton1Click()

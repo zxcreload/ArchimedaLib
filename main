@@ -1,138 +1,242 @@
-local ClickGui = {}
-local TweenService = game:GetService("TweenService")
+-- Создаем ScreenGui в StarterGui
+local player = game.Players.LocalPlayer
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = player:WaitForChild("PlayerGui")
+screenGui.Name = "CustomClickGUI"
 
--- Функция создания окна
-function ClickGui:CreateWindow(title)
-    -- Создаём ScreenGui
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-    
-    -- Создаём большой чёрный фрейм
-    local Frame = Instance.new("Frame")
-    Frame.Size = UDim2.new(0, 500, 0, 400) -- Большой размер
-    Frame.Position = UDim2.new(0.5, -250, 0.5, -200) -- Центр экрана
-    Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) -- Чёрный цвет
-    Frame.BorderSizePixel = 0
-    Frame.Parent = ScreenGui
-    
-    -- Заголовок
-    local TitleBar = Instance.new("Frame")
-    TitleBar.Size = UDim2.new(1, 0, 0, 30)
-    TitleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    TitleBar.BorderSizePixel = 0
-    TitleBar.Parent = Frame
-    
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = title or "My GUI"
-    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TitleLabel.TextSize = 16
-    TitleLabel.Font = Enum.Font.SourceSans
-    TitleLabel.Parent = TitleBar
-    
-    -- Перетаскивание
-    local dragging, dragInput, dragStart, startPos
-    TitleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Frame.Position
-        end
-    end)
-    TitleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
-            local delta = input.Position - dragStart
-            Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    TitleBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-    
-    -- Контейнер для контента вкладок
-    local ContentFrame = Instance.new("Frame")
-    ContentFrame.Size = UDim2.new(1, 0, 1, -60) -- Учитываем заголовок и табы
-    ContentFrame.Position = UDim2.new(0, 0, 0, 30)
-    ContentFrame.BackgroundTransparency = 1
-    ContentFrame.Parent = Frame
-    
-    -- Контейнер для вкладок
-    local TabContainer = Instance.new("Frame")
-    TabContainer.Size = UDim2.new(1, 0, 0, 30)
-    TabContainer.Position = UDim2.new(0, 0, 1, -30) -- Внизу
-    TabContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    TabContainer.BorderSizePixel = 0
-    TabContainer.Parent = Frame
-    
-    local Tabs = {}
-    local ActiveTab = nil
-    
-    -- Функция создания вкладки
-    local function CreateTab(tabName)
-        local TabButton = Instance.new("TextButton")
-        TabButton.Size = UDim2.new(0, 100, 1, 0)
-        TabButton.Position = UDim2.new(0, #Tabs * 100, 0, 0)
-        TabButton.Text = tabName or "Tab"
-        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.TextSize = 14
-        TabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        TabButton.BorderSizePixel = 0
-        TabButton.Parent = TabContainer
-        
-        local TabContent = Instance.new("Frame")
-        TabContent.Size = UDim2.new(1, 0, 1, 0)
-        TabContent.BackgroundTransparency = 1
-        TabContent.Parent = ContentFrame
-        TabContent.Visible = false
-        
-        local tabObj = {
-            Button = TabButton,
-            Content = TabContent,
-            AddButton = function(self, buttonText, callback)
-                local Button = Instance.new("TextButton")
-                Button.Size = UDim2.new(0, 100, 0, 30)
-                Button.Position = UDim2.new(0, 10, 0, #TabContent:GetChildren() * 40)
-                Button.Text = buttonText or "Click Me"
-                Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-                Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                Button.BorderSizePixel = 0
-                Button.Parent = TabContent
-                Button.MouseButton1Click:Connect(callback or function() print("Button clicked!") end)
-                return Button
-            end
-        }
-        
-        -- Анимация и переключение вкладок
-        TabButton.MouseButton1Click:Connect(function()
-            if ActiveTab ~= tabObj then
-                if ActiveTab then
-                    ActiveTab.Content.Visible = false
-                    TweenService:Create(ActiveTab.Button, TweenInfo.new(0.3), {TextSize = 14}):Play()
-                end
-                tabObj.Content.Visible = true
-                TweenService:Create(TabButton, TweenInfo.new(0.3), {TextSize = 18}):Play()
-                ActiveTab = tabObj
+-- Создаем основной фрейм
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 450, 0, 400)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -200)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+mainFrame.Visible = true
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = mainFrame
+
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(50, 50, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+}
+gradient.Rotation = 45
+gradient.Parent = mainFrame
+
+local stroke = Instance.new("UIStroke")
+stroke.Thickness = 2
+stroke.Color = Color3.fromRGB(0, 0, 0)
+stroke.Transparency = 0.7
+stroke.Parent = mainFrame
+
+-- Drag-and-drop с UserInputService
+local dragging = false
+local dragStart = nil
+local startPos = nil
+local UserInputService = game:GetService("UserInputService")
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+        local delta = input.Position - dragStart
+        local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        game.TweenService:Create(mainFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = newPos}):Play()
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+-- Открытие/закрытие на Insert
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Insert then
+        mainFrame.Visible = not mainFrame.Visible
+    end
+end)
+
+-- Панель для основных вкладок (слева)
+local sectionPanel = Instance.new("Frame")
+sectionPanel.Size = UDim2.new(0, 150, 1, 0)
+sectionPanel.Position = UDim2.new(0, 0, 0, 0)
+sectionPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+sectionPanel.BorderSizePixel = 0
+sectionPanel.Parent = mainFrame
+
+local sectionCorner = Instance.new("UICorner")
+sectionCorner.CornerRadius = UDim.new(0, 10)
+sectionCorner.Parent = sectionPanel
+
+-- Область контента (справа)
+local contentArea = Instance.new("Frame")
+contentArea.Size = UDim2.new(0, 300, 1, 0)
+contentArea.Position = UDim2.new(0, 150, 0, 0)
+contentArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+contentArea.BorderSizePixel = 0
+contentArea.Parent = mainFrame
+
+local contentCorner = Instance.new("UICorner")
+contentCorner.CornerRadius = UDim.new(0, 10)
+contentCorner.Parent = contentArea
+
+-- Панель для подвкладок
+local subSectionPanel = Instance.new("Frame")
+subSectionPanel.Size = UDim2.new(1, 0, 0, 50) -- Высота 50 для ряда кнопок
+subSectionPanel.Position = UDim2.new(0, 0, 0, 0)
+subSectionPanel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+subSectionPanel.BorderSizePixel = 0
+subSectionPanel.Parent = contentArea
+subSectionPanel.Visible = false
+
+local subSectionCorner = Instance.new("UICorner")
+subSectionCorner.CornerRadius = UDim.new(0, 8)
+subSectionCorner.Parent = subSectionPanel
+
+-- Область настроек (под подвкладками)
+local settingsArea = Instance.new("Frame")
+settingsArea.Size = UDim2.new(1, 0, 1, -50) -- Оставляем место для подвкладок
+settingsArea.Position = UDim2.new(0, 0, 0, 50)
+settingsArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+settingsArea.BorderSizePixel = 0
+settingsArea.Parent = contentArea
+
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(0, 8)
+settingsCorner.Parent = settingsArea
+
+-- Данные о секциях и подвкладках
+local sections = {
+    ["AimBot"] = {"Silent", "Camlock", "Bullet"},
+    ["AntiAim"] = {"Desync", "Spin", "Jitter"},
+    ["Movement"] = {"Speed", "BunnyHop", "Flight"},
+    ["PlayerSettings"] = {"ESP", "Chams", "Health"},
+    ["Misc"] = {"KillSay", "AutoClick", "FakeLag"},
+    ["UiSettings"] = {"Theme", "Keybinds", "Reset"}
+}
+
+local sectionButtons = {}
+local subSectionButtons = {}
+
+-- Функция создания кнопок подвкладок
+local function createSubSections(sectionName)
+    for _, btn in pairs(subSectionButtons) do
+        btn:Destroy()
+    end
+    subSectionButtons = {}
+    subSectionPanel.Visible = true
+
+    local subSections = sections[sectionName]
+    for i, subSectionName in ipairs(subSections) do
+        local button = Instance.new("TextButton")
+        button.Size = UDim2.new(0, 90, 0, 40)
+        button.Position = UDim2.new(0, (i - 1) * 95 + 5, 0, 5)
+        button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        button.BorderSizePixel = 0
+        button.Text = subSectionName
+        button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        button.TextSize = 14
+        button.Font = Enum.Font.Gotham
+        button.Parent = subSectionPanel
+
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 6)
+        btnCorner.Parent = button
+
+        button.MouseEnter:Connect(function()
+            game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+        end)
+        button.MouseLeave:Connect(function()
+            if button ~= subSectionButtons.active then
+                game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
             end
         end)
-        
-        table.insert(Tabs, tabObj)
-        return tabObj
+
+        button.MouseButton1Click:Connect(function()
+            if subSectionButtons.active then
+                game.TweenService:Create(subSectionButtons.active, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+            end
+            subSectionButtons.active = button
+            game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
+
+            for _, child in pairs(settingsArea:GetChildren()) do
+                child:Destroy()
+            end
+            local settingsLabel = Instance.new("TextLabel")
+            settingsLabel.Size = UDim2.new(1, 0, 1, 0)
+            settingsLabel.BackgroundTransparency = 1
+            settingsLabel.Text = "Настройки для " .. subSectionName
+            settingsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            settingsLabel.TextSize = 18
+            settingsLabel.Font = Enum.Font.Gotham
+            settingsLabel.Parent = settingsArea
+        end)
+
+        table.insert(subSectionButtons, button)
     end
-    
-    -- Активируем первую вкладку по умолчанию
-    if #Tabs > 0 then
-        Tabs[1].Content.Visible = true
-        TweenService:Create(Tabs[1].Button, TweenInfo.new(0.3), {TextSize = 18}):Play()
-        ActiveTab = Tabs[1]
+
+    -- Активируем первую подвкладку
+    if #subSectionButtons > 0 then
+        subSectionButtons[1]:MouseButton1Click()
     end
-    
-    return {
-        Window = Frame,
-        AddTab = CreateTab
-    }
 end
 
-return ClickGui
+-- Создаем основные вкладки
+for sectionName, _ in pairs(sections) do
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, -10, 0, 50)
+    button.Position = UDim2.new(0, 5, 0, (#sectionButtons * 55) + 5)
+    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    button.BorderSizePixel = 0
+    button.Text = sectionName
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.TextSize = 18
+    button.Font = Enum.Font.GothamBold
+    button.Parent = sectionPanel
+
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 8)
+    btnCorner.Parent = button
+
+    local btnGradient = Instance.new("UIGradient")
+    btnGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 80, 80)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
+    }
+    btnGradient.Parent = button
+
+    button.MouseEnter:Connect(function()
+        game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+    end)
+    button.MouseLeave:Connect(function()
+        if button ~= sectionButtons.active then
+            game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+        end
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        if sectionButtons.active then
+            game.TweenService:Create(sectionButtons.active, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+        end
+        sectionButtons.active = button
+        game.TweenService:Create(button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(120, 120, 120)}):Play()
+
+        createSubSections(sectionName)
+    end)
+
+    table.insert(sectionButtons, button)
+end
+
+-- Активируем первую вкладку
+sectionButtons[1]:MouseButton1Click()

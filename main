@@ -1,0 +1,82 @@
+local ClickGui = {}
+
+-- Функция создания окна с перетаскиванием
+function ClickGui:CreateWindow(title)
+    -- Создаём ScreenGui
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Создаём основную рамку (окно)
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 300, 0, 200)
+    Frame.Position = UDim2.new(0.5, -150, 0.5, -100) -- Центр экрана
+    Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Frame.BorderSizePixel = 0
+    Frame.Parent = ScreenGui
+    
+    -- Создаём заголовок (полоса для перетаскивания)
+    local TitleBar = Instance.new("Frame")
+    TitleBar.Size = UDim2.new(1, 0, 0, 30)
+    TitleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TitleBar.BorderSizePixel = 0
+    TitleBar.Parent = Frame
+    
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, 0, 1, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = title or "My GUI"
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextSize = 16
+    TitleLabel.Font = Enum.Font.SourceSans
+    TitleLabel.Parent = TitleBar
+    
+    -- Переменные для перетаскивания
+    local dragging = false
+    local dragInput, dragStart, startPos
+    
+    -- Логика перетаскивания
+    TitleBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = Frame.Position
+        end
+    end)
+    
+    TitleBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+            local delta = input.Position - dragStart
+            Frame.Position = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X, 
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+    
+    TitleBar.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    
+    -- Возвращаем объект с методами
+    return {
+        Window = Frame,
+        AddButton = function(self, buttonText, callback)
+            local Button = Instance.new("TextButton")
+            Button.Size = UDim2.new(0, 100, 0, 30)
+            Button.Position = UDim2.new(0, 10, 0, 40 + (#Frame:GetChildren() - 1) * 40) -- Учитываем TitleBar
+            Button.Text = buttonText or "Click Me"
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            Button.BorderSizePixel = 0
+            Button.Parent = Frame
+            Button.MouseButton1Click:Connect(callback or function() print("Button clicked!") end)
+            return Button
+        end
+    }
+end
+
+return ClickGui

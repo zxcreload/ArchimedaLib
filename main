@@ -79,9 +79,13 @@ contentArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 contentArea.BorderSizePixel = 0
 contentArea.Parent = mainFrame
 
--- Панель для подвкладок с прокруткой
+-- Определяем высоту кнопок подвкладок и панели
+local buttonHeight = 24 -- Высота кнопок подвкладок
+local subSectionPanelHeight = buttonHeight + 10 -- Высота панели с учетом отступов (5 сверху, 5 снизу)
+
+-- Панель для подвкладок с прокруткой (автоматическая подстройка высоты)
 local subSectionPanel = Instance.new("ScrollingFrame")
-subSectionPanel.Size = UDim2.new(1, 0, 0, 60)
+subSectionPanel.Size = UDim2.new(1, 0, 0, subSectionPanelHeight) -- Динамическая высота
 subSectionPanel.Position = UDim2.new(0, 0, 0, 0)
 subSectionPanel.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 subSectionPanel.BorderSizePixel = 0
@@ -92,8 +96,8 @@ subSectionPanel.Visible = false
 
 -- Область настроек
 local settingsArea = Instance.new("Frame")
-settingsArea.Size = UDim2.new(1, 0, 1, -60)
-settingsArea.Position = UDim2.new(0, 0, 0, 60)
+settingsArea.Size = UDim2.new(1, 0, 1, -subSectionPanelHeight) -- Учитываем новую высоту панели подвкладок
+settingsArea.Position = UDim2.new(0, 0, 0, subSectionPanelHeight) -- Смещаем вниз на высоту панели
 settingsArea.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 settingsArea.BorderSizePixel = 0
 settingsArea.Parent = contentArea
@@ -111,7 +115,6 @@ local sections = {
 local sectionButtons = {}
 local subSectionButtons = {}
 
--- Функция создания кнопок подвкладок
 local function createSubSections(sectionName)
     for _, btn in pairs(subSectionButtons) do
         btn:Destroy()
@@ -127,15 +130,37 @@ local function createSubSections(sectionName)
         end
     end
 
-    local buttonSize = 50 -- Квадратные кнопки 50x50
     local padding = 5
-    local totalWidth = (#subSections * (buttonSize + padding)) - padding
+    local totalWidth = 0
+    
+    -- Сначала вычисляем общую ширину
+    for _, subSectionName in ipairs(subSections) do
+        local textSize = game:GetService("TextService"):GetTextSize(
+            subSectionName,
+            14,
+            Enum.Font.Gotham,
+            Vector2.new(1000, 100)
+        )
+        totalWidth = totalWidth + textSize.X + 20 + padding -- Добавляем отступы по 10 с каждой стороны
+    end
+    totalWidth = totalWidth - padding -- Убираем последний padding
+    
     subSectionPanel.CanvasSize = UDim2.new(0, totalWidth, 0, 0)
 
+    local currentX = 0
     for i, subSectionName in ipairs(subSections) do
+        local textSize = game:GetService("TextService"):GetTextSize(
+            subSectionName,
+            14,
+            Enum.Font.Gotham,
+            Vector2.new(1000, 100)
+        )
+        
+        local buttonWidth = textSize.X + 20 -- Ширина по тексту + отступы
+        
         local button = Instance.new("TextButton")
-        button.Size = UDim2.new(0, buttonSize, 0, buttonSize) -- Квадратные
-        button.Position = UDim2.new(0, (i - 1) * (buttonSize + padding), 0, 5)
+        button.Size = UDim2.new(0, buttonWidth, 0, buttonHeight) -- Используем динамическую высоту
+        button.Position = UDim2.new(0, currentX, 0, 5)
         button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
         button.BorderSizePixel = 0
         button.Text = subSectionName
@@ -194,6 +219,7 @@ local function createSubSections(sectionName)
         end)
 
         table.insert(subSectionButtons, button)
+        currentX = currentX + buttonWidth + padding
     end
 
     if #subSectionButtons > 0 then
@@ -270,7 +296,7 @@ local function toggleGUI()
             child:Destroy()
         end
         
-        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(-1, -800, 0.5, -250)}) -- Учитываем новую ширину
+        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(-1, -800, 0.5, -250)})
         mainTween:Play()
         mainTween.Completed:Connect(function()
             mainFrame.Visible = false
@@ -278,8 +304,8 @@ local function toggleGUI()
     else
         -- Анимация открытия
         mainFrame.Visible = true
-        mainFrame.Position = UDim2.new(-1, -800, 0.5, -250) -- Учитываем новую ширину
-        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.5, -400, 0.5, -250)}) -- Центрируем с учетом ширины 800
+        mainFrame.Position = UDim2.new(-1, -800, 0.5, -250)
+        local mainTween = game.TweenService:Create(mainFrame, tweenInfo, {Position = UDim2.new(0.5, -400, 0.5, -250)})
         mainTween:Play()
         mainTween.Completed:Connect(function()
             sectionButtons[1]:MouseButton1Click()
